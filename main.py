@@ -1,5 +1,12 @@
 import csv
-from functions import count_values, count_attribute_decision_values,count_entropy, count_entropy_for_attribute, atribute_info, gain, gain_ratio
+from functions import *
+
+
+class TreeNode:
+    def __init__(self, attribute_index=None, decision=None, branches=None):
+        self.attribute_index = attribute_index
+        self.decision = decision
+        self.branches = branches if branches else {}
 
 
 data = []
@@ -10,52 +17,39 @@ with open("gielda.txt", 'r', newline='') as file:
         data.append(row)
 
 
-atr1ValuesCount, atr1Count = count_values(data,0)
-atr2ValuesCount, atr2Count = count_values(data,1)
-atr3ValuesCount, atr3Count = count_values(data,2)
-decisionAtrValuesCount, decisionAtrCount = count_values(data,3)
-
-decisionAtributeValues = decisionAtrValuesCount.keys()
-
-print('Atrybut 2', atr2ValuesCount, 'count ',atr2Count) #- unique values and their count, count of unique values
-
-atr1DecisionValuecount = count_attribute_decision_values(data, 0, 3, decisionAtributeValues)
-atr2DecisionValuecount = count_attribute_decision_values(data, 1, 3, decisionAtributeValues)
-atr3DecisionValuecount = count_attribute_decision_values(data, 2, 3, decisionAtributeValues)
-
-print('Decision values count for atr 2', atr2DecisionValuecount)
+attributes = [0, 1, 2]  
+decision_attribute_index = 3
 
 
-decisionAtributeEntropy = count_entropy(decisionAtrValuesCount)
-print('Entropy for decision atribute', decisionAtributeEntropy)
+def build_tree(data, attributes, decision_attribute_index, depth=0):
+    decision_values, _ = count_values(data, decision_attribute_index)
+    if len(decision_values) == 1:  # If all decisions are the same, return a leaf node
+        majority_decision = max(decision_values, key=decision_values.get)
+        print('  ' * depth, 'Decision:', majority_decision)
+        return TreeNode(decision=majority_decision)
+    if not attributes:  # If there are no attributes left, return the majority decision
+        majority_decision = max(decision_values, key=decision_values.get)
+        print('  ' * depth, 'Decision:', majority_decision)
+        return TreeNode(decision=majority_decision)
+    best_attribute_index = get_best_split(data, attributes, decision_attribute_index)
+    if best_attribute_index is None:  # If no best attribute found, return the majority decision
+        majority_decision = max(decision_values, key=decision_values.get)
+        print('  ' * depth, 'Decision:', majority_decision)
+        return TreeNode(decision=majority_decision)
+    branches = {}
+    attribute_values, _ = count_values(data, best_attribute_index)
+    print('  ' * depth, 'Attribute Index:', best_attribute_index)
+    for value in attribute_values:
+        subset = [row for row in data if row[best_attribute_index] == value]
+        if not subset:  # If subset is empty, return the majority decision
+            majority_decision = max(decision_values, key=decision_values.get)
+            print('  ' * (depth + 1), 'Value:', value, 'Decision:', majority_decision)
+            branches[value] = TreeNode(decision=majority_decision)
+        else:
+            subset_attributes = [attribute for attribute in attributes if attribute != best_attribute_index]
+            print('  ' * (depth + 1), 'Value:', value)
+            branches[value] = build_tree(subset, subset_attributes, decision_attribute_index, depth=depth+2)
+    return TreeNode(attribute_index=best_attribute_index, branches=branches)
 
 
-
-print('Entropy for attribute 1', count_entropy_for_attribute(atr1DecisionValuecount, decisionAtributeValues))
-print('Entropy for attribute 2', count_entropy_for_attribute(atr2DecisionValuecount, decisionAtributeValues))
-print('Entropy for attribute 3', count_entropy_for_attribute(atr3DecisionValuecount, decisionAtributeValues))
-
-
-atr1info = atribute_info(data, atr1ValuesCount, 0, decisionAtributeValues, 3)
-atr2info = atribute_info(data, atr2ValuesCount, 1, decisionAtributeValues, 3)
-atr3info = atribute_info(data, atr3ValuesCount, 2, decisionAtributeValues, 3)
-
-print('Info for atribute 1 ', atr1info)
-print('Info for atribute 2 ', atr2info)
-print('Info for atribute 3 ', atr3info)
-
-atr1Gain = gain(decisionAtributeEntropy, atr1info)
-atr2Gain = gain(decisionAtributeEntropy, atr2info)
-atr3Gain = gain(decisionAtributeEntropy, atr3info)
-
-print('Gain for atribute 1', atr1Gain)
-print('Gain for atribute 2', atr2Gain)
-print('Gain for atribute 3', atr3Gain)
-
-atr1GainRatio = gain_ratio(data, atr1ValuesCount,decisionAtrValuesCount, 0, 3)
-atr2GainRatio = gain_ratio(data, atr2ValuesCount,decisionAtrValuesCount, 1, 3)
-atr3GainRatio = gain_ratio(data, atr3ValuesCount,decisionAtrValuesCount, 2, 3)
-
-print('Gain ratio for atribute 1', atr1GainRatio)
-print('Gain ratio for atribute 2', atr2GainRatio)
-print('Gain ratio for atribute 3', atr3GainRatio)
+tree = build_tree(data, attributes, decision_attribute_index)
