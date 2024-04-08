@@ -11,14 +11,14 @@ class TreeNode:
 
 data = []
 
-with open("gielda.txt", 'r', newline='') as file:
+with open("data.txt", 'r', newline='') as file:
     csv_reader = csv.reader(file)
     for row in csv_reader:
         data.append(row)
 
 
-attributes = [0, 1, 2]  
-decision_attribute_index = 3
+attributes = [0, 1, 2,3,4,5,6,7,8]  
+decision_attribute_index = 9
 
 
 def build_tree(data, attributes, decision_attribute_index, depth=0):

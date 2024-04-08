@@ -58,7 +58,10 @@ def gain_ratio(data, attribute_values, decision_attribute_values_count, attribut
     attribute_info = atribute_info(data, attribute_values, attribute_index, decision_attribute_values_count, decision_attribute_index)
     gain_value = gain(decision_attribute_entropy, attribute_info)
     split_info = count_entropy(attribute_values)
-    gain_ratio = gain_value / split_info
+    if split_info != 0:
+        gain_ratio = gain_value / split_info
+    else: 
+        gain_ratio = 0
     return gain_ratio
 
 def get_best_split(data, attributes, decision_attribute_index):
